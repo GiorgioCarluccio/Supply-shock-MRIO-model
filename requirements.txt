@@ -1,0 +1,15 @@
+pandas
+numpy
+scipy
+pyarrow
+xarray
+netcdf4
+dask
+geopandas
+pyogrio
+shapely
+matplotlib
+openpyxl
+python-dotenv
+databricks-connect
+databricks-sql-connector

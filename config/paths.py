@@ -1,0 +1,19 @@
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+DATA_DIR = PROJECT_ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
+INTERIM_DATA_DIR = DATA_DIR / "interim"
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+
+RAW_EOBS_DIR = RAW_DATA_DIR / "eobs"
+RAW_ISTAT_DIR = RAW_DATA_DIR / "istat"
+RAW_ISPRA_DIR = RAW_DATA_DIR / "ispra"
+
+CLIMATE_PROCESSED_DIR = PROCESSED_DATA_DIR / "climate"
+CLIMATE_MAPS_DIR = CLIMATE_PROCESSED_DIR / "maps"
+
+SAM_INTERIM_DIR = INTERIM_DATA_DIR / "sam"
+SAM_PROCESSED_DIR = PROCESSED_DATA_DIR / "sam"
