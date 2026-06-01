@@ -4,13 +4,15 @@ import Image from "next/image";
 
 import { APP_SUBTITLE, APP_TITLE } from "@/lib/constants";
 
+const LOGO_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/openeconomics-logo-black.png`;
+
 /** Top bar: OpenEconomics logo (black on light) + project title. */
 export function TopBar() {
   return (
     <header className="flex h-16 items-center gap-4 border-b border-grey-mid bg-paper px-5">
       <div className="flex items-center gap-3">
         <Image
-          src="/logos/openeconomics-logo-black.png"
+          src={LOGO_SRC}
           alt="OpenEconomics"
           width={150}
           height={32}
