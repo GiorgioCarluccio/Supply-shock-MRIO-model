@@ -1,0 +1,40 @@
+{
+  "name": "supply-shock-mrio-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static demonstrative dashboard for the Supply-shock MRIO climate-risk model (OpenEconomics).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "build:pages": "cross-env NEXT_PUBLIC_BASE_PATH=/Supply-shock-MRIO-model next build",
+    "deploy": "npm run build:pages && gh-pages -d out -t true -b gh-pages"
+  },
+  "dependencies": {
+    "@radix-ui/react-select": "^2.1.4",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "echarts": "^5.5.1",
+    "lucide-react": "^0.469.0",
+    "maplibre-gl": "^4.7.1",
+    "next": "^15.1.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "swr": "^2.2.5",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
+    "gh-pages": "^6.2.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}

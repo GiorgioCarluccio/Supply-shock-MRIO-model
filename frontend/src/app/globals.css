@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #f4f4f2;
+  color: #000000;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-atkinson), Inter, system-ui, sans-serif;
+}
+
+/* High-contrast focus for keyboard users */
+*:focus-visible {
+  outline: 2px solid #4400b3;
+  outline-offset: 1px;
+}
+
+/* MapLibre province popup — brand styled, minimal */
+.oe-map-popup .maplibregl-popup-content {
+  border: 1px solid #ddddda;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 8px 10px;
+  font-family: var(--font-atkinson), Inter, system-ui, sans-serif;
+  font-size: 12px;
+  color: #000;
+}
+.oe-map-popup .maplibregl-popup-tip {
+  border-top-color: #fff;
+}
+.oe-popup-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #ddddda;
+  padding-bottom: 3px;
+}
+.oe-map-popup b {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* Thin scrollbars for dense tables / selects */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ddddda;
+  border-radius: 4px;
+}
