@@ -1,0 +1,35 @@
+
+=== Run static scenarios ===
+Loading model inputs ...
+Productive nodes: 6462
+[run] heatwave_central ...
+[done] heatwave_central: converged=False iters=50 total_loss=165212.99
+[run] flood_low ...
+[done] flood_low: converged=False iters=50 total_loss=37955.24
+[run] flood_medium ...
+[done] flood_medium: converged=False iters=50 total_loss=116988.86
+[run] flood_high ...
+[done] flood_high: converged=False iters=50 total_loss=60025.73
+[run] landslide_p1 ...
+[done] landslide_p1: converged=False iters=50 total_loss=7247.85
+[run] landslide_p2 ...
+[done] landslide_p2: converged=False iters=50 total_loss=17535.00
+[run] landslide_p3 ...
+[done] landslide_p3: converged=False iters=50 total_loss=6460.00
+[run] landslide_p4 ...
+[done] landslide_p4: converged=False iters=50 total_loss=6778.14
+
+--- Summary ---
+     scenario_id  converged  iterations  total_direct_loss  total_indirect_loss    total_loss  loss_rate_total
+heatwave_central      False          50       27015.646061        138197.347938 165212.994000         0.042689
+       flood_low      False          50        7265.106445         30690.132249  37955.238694         0.009807
+    flood_medium      False          50       13563.671160        103425.190221 116988.861382         0.030229
+      flood_high      False          50        8922.349890         51103.380146  60025.730036         0.015510
+    landslide_p1      False          50         358.934781          6888.914198   7247.848979         0.001873
+    landslide_p2      False          50         774.808384         16760.193807  17535.002192         0.004531
+    landslide_p3      False          50         550.366830          5909.632799   6459.999629         0.001669
+    landslide_p4      False          50         573.456452          6204.687593   6778.144046         0.001751
+
+Wrote 8 scenario folders under C:\Users\GiorgioCesareCarlucc\OneDrive - OpenEconomics S.r.l\GitHub\Supply-shock-MRIO-model\data\processed\simulations
+
+=== Done ===

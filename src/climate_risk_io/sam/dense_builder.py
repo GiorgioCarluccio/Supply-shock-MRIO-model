@@ -25,14 +25,37 @@ def build_nodes(pairs_df: pd.DataFrame) -> pd.DataFrame:
     ``pairs_df`` must hold the (already de-duplicated) union of origin and
     destination region/sector pairs in columns ``region_code`` and
     ``sector_code``. Node IDs are assigned after sorting by region then sector.
+
+    If ``pairs_df`` also carries a ``macrosector_code`` column (the third,
+    ``__``-separated part of the source ``row_label``/``col_label``), it is kept
+    and the canonical three-part ``region__sector__macrosector`` ``node_label``
+    is emitted. The macrosector is needed downstream to classify accounts into
+    productive / final-demand / value-added blocks. When the column is absent
+    the legacy two-part label is produced for backward compatibility.
     """
+    has_macro = "macrosector_code" in pairs_df.columns
+    keep = ["region_code", "sector_code"] + (["macrosector_code"] if has_macro else [])
+
     nodes = (
-        pairs_df[["region_code", "sector_code"]]
+        pairs_df[keep]
         .drop_duplicates()
         .sort_values(["region_code", "sector_code"], kind="mergesort")
         .reset_index(drop=True)
     )
     nodes.insert(0, "node_id", np.arange(len(nodes), dtype=np.int64))
+
+    if has_macro:
+        nodes["node_label"] = (
+            nodes["region_code"].astype(str)
+            + "__"
+            + nodes["sector_code"].astype(str)
+            + "__"
+            + nodes["macrosector_code"].astype(str)
+        )
+        return nodes[
+            ["node_id", "region_code", "sector_code", "macrosector_code", "node_label"]
+        ]
+
     nodes["node_label"] = (
         nodes["region_code"].astype(str) + "__" + nodes["sector_code"].astype(str)
     )

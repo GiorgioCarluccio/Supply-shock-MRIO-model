@@ -1,0 +1,64 @@
+{
+  "sam_dir": "C:\\Users\\GiorgioCesareCarlucc\\OneDrive - OpenEconomics S.r.l\\GitHub\\Supply-shock-MRIO-model\\.test_tmp\\case_1\\sam",
+  "n_accounts_total": 11,
+  "n_productive": 4,
+  "n_final_demand": 4,
+  "n_value_added": 3,
+  "n_external_input": 1,
+  "n_sector_groups": 2,
+  "Z0_shape": [
+    4,
+    4
+  ],
+  "VA0_shape": [
+    3,
+    4
+  ],
+  "IMP0_shape": [
+    1,
+    4
+  ],
+  "FD0_length": 4,
+  "X0_length": 4,
+  "totals": {
+    "total_Z0": 84.0,
+    "total_FD0": 194.0,
+    "total_VA0": 55.0,
+    "total_IMP0": 0.0,
+    "total_X0": 278.0
+  },
+  "row_vs_column_output": {
+    "max_abs_gap": 40.0,
+    "mean_abs_gap": 34.75,
+    "max_rel_error": 0.609375,
+    "total_row_output": 278.0,
+    "total_column_output": 139.0,
+    "total_import_inputs": 0.0,
+    "va_only": {
+      "max_abs_gap": 40.0,
+      "mean_abs_gap": 34.75,
+      "max_rel_error": 0.609375,
+      "total_column_output": 139.0
+    }
+  },
+  "account_class_counts": {
+    "productive": 4,
+    "final_demand": 4,
+    "value_added": 3
+  },
+  "macrosector_counts": {
+    "A": 2,
+    "I": 2,
+    "L": 1,
+    "K": 1,
+    "T": 1,
+    "HH": 1,
+    "CF": 1,
+    "G": 1,
+    "R": 1
+  },
+  "node_ordering": "region_code ascending, then sector_code ascending",
+  "matrix_orientation": "Z0[i, j] = value supplied by seller i to buyer j",
+  "x0_definition": "X0 = row_sum(Z0) + FD0",
+  "warning": "Row-vs-column output gap is large (max relative error 60.938%). Row and column output are NOT forced equal; inspect the SAM."
+}

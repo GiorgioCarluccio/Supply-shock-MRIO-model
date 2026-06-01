@@ -50,11 +50,21 @@ Supply-shock-MRIO-model/
     extract_sam_from_databricks.py   (deprecated)
     build_sam_model_inputs.py        (deprecated)
     test_sam_outputs.py              (deprecated)
+    build_model_inputs_from_sam.py
+    run_model_smoke_test.py
+    test_model_layer.py
+    enrich_sam_nodes_with_macrosector.py
   src/
     climate_risk_io/
       climate/
       io_utils/
       sam/
+      model/
+  docs/
+    methodology/
+      model_layer.md
+      sam_account_structure.md
+    prompts/
 ```
 
 Large raw and generated data files are intentionally excluded from Git. Keep local copies under `data/raw/`, `data/interim/`, and `data/processed/`.
@@ -218,3 +228,163 @@ The earlier Parquet-first / sparse scripts
 (`extract_sam_from_databricks.py`, `build_sam_model_inputs.py`,
 `test_sam_outputs.py`) are **deprecated** and now print a pointer to the dense
 workflow.
+
+The dense `nodes.csv` now also carries a `macrosector_code` column and a
+canonical three-part `region__sector__macrosector` `node_label`. The macrosector
+is the third `__`-separated part of the source `row_label` / `col_label` and is
+required by the modelling layer to split accounts into productive, final-demand
+and value-added blocks. New builds emit it automatically; an artifact built
+before this change can be upgraded locally with:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\enrich_sam_nodes_with_macrosector.py
+```
+
+## Modelling Layer
+
+The modelling layer (`src/climate_risk_io/model/`) turns the dense SAM into a
+region-sector input-output propagation model that estimates **business
+interruption** (lost value of production) from physical-risk supply shocks.
+
+### SAM account classification
+
+Every account is parsed from its canonical label
+`region_code__sector_code__macrosector_code` and classified by macrosector:
+
+```text
+productive    = {A, I, S}          (agriculture, industry, services)
+value added   = {L, K, T}          (labour, capital, indirect taxes)
+final demand  = {HH, CF, G, R}     (households, capital formation, government, rest of world)
+```
+
+`ROW` (macrosector `R`) is treated as final demand. The propagation model runs
+**only on the productive block**.
+
+### Model input construction
+
+`build_model_inputs_from_sam.py` slices the productive block out of the full SAM:
+
+```text
+Z0  = productive rows x productive columns
+FD0 = productive rows x final-demand columns, summed per productive row
+VA0 = value-added rows x productive columns
+X0  = row_sum(Z0) + FD0
+```
+
+It also reports a row-vs-column output reconciliation gap (`X0` vs
+`intermediate_inputs_by_column + value_added_by_column`). Row and column output
+are **not** forced equal; a large gap is reported and warned about.
+
+Outputs are written to `data/processed/model_inputs/` (`Z0.npy`, `FD0.npy`,
+`X0.npy`, `VA0.npy`, `globsec_of.npy`, `productive_nodes.csv`,
+`account_nodes.csv`, `sector_mapping.csv`, `model_input_report.json`).
+
+### Propagation model
+
+`IOClimateModel.run(sd, sp, gamma, substitution_p)` takes explicit demand
+(`sd`) and supply (`sp`) shock vectors and iterates a demand-only outer loop:
+supplier rationing, a **CES input bottleneck** (weighted by input cost shares,
+tunable via `substitution_p`), within-sector-group inventory reallocation, a
+capacity cap, and a monotone final-demand update until convergence. The
+demand-only output requirement is obtained by solving `(I - A0) X = FD` with a
+reusable LU factorisation rather than forming the dense Leontief inverse. The
+CES bottleneck replaces the reference strict-min Leontief bottleneck, which
+over-propagated trivial universal suppliers; the aggregated global-feasibility
+cap is off by default (it does not converge in the outer loop). Indirect
+propagation is currently modest pending a redesign — see
+[docs/methodology/model_layer.md](docs/methodology/model_layer.md) §5.
+
+### Commands
+
+Build model inputs from the SAM:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_model_inputs_from_sam.py
+```
+
+Run the propagation smoke test (subset by default; `--full` for the whole block):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_model_smoke_test.py
+```
+
+Run the non-Databricks model-layer tests:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\test_model_layer.py
+```
+
+Run the global project setup test:
+
+```powershell
+.\.venv\Scripts\python.exe test_project_setup.py
+```
+
+## Shock calibration pipeline
+
+The shock calibration pipeline turns hazard exposure data (heatwave, flood,
+landslide) into model-ready supply and demand shock vectors, runs a fixed
+library of precomputed scenarios through the propagation model, and exports
+static, dashboard-ready result tables. It is local, explicit and testable: no
+FastAPI, Next.js, Docker, Redis, Celery, database or cloud dependency.
+
+Hazard exposure is converted into *equivalent operational interruption days*,
+then into shocks:
+
+```text
+equivalent_stop_days = exposure_component × base_interruption_days
+                       × sector_vulnerability × scenario_intensity_multiplier
+supply_shock = min(equivalent_stop_days / 250, max_supply_shock)   # default cap 0.25
+demand_shock = min(lambda × supply_shock, max_demand_shock)        # default cap 0.10
+```
+
+Heatwave uses the validated `heatwave_exposure_weight`; flood and landslide use
+the ISPRA share of local business units at risk. Climate files use ISTAT
+province codes and the SAM nodes use NUTS-3 region codes, so the pipeline builds
+and validates a `province_code_crosswalk.csv` and never assumes the two systems
+are equal. See
+[docs/methodology/shock_calibration.md](docs/methodology/shock_calibration.md)
+for the full methodology and limitations.
+
+The package lives in `src/climate_risk_io/shocks/` (`pir_parser`,
+`exposure_loader`, `sector_vulnerability`, `scenario_library`, `calibration`,
+`shock_matrix`, `batch_runner`, `dashboard_exports`).
+
+### Commands
+
+Run the steps in order from the project root:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\prepare_pir_exposure.py
+.\.venv\Scripts\python.exe scripts\build_hazard_exposure_table.py
+.\.venv\Scripts\python.exe scripts\build_sector_vulnerability_table.py
+.\.venv\Scripts\python.exe scripts\build_scenario_library.py
+.\.venv\Scripts\python.exe scripts\build_shock_matrix.py
+.\.venv\Scripts\python.exe scripts\run_static_scenarios.py
+.\.venv\Scripts\python.exe scripts\build_dashboard_outputs.py
+.\.venv\Scripts\python.exe scripts\test_shock_pipeline.py
+```
+
+`build_sector_vulnerability_table.py` and `build_scenario_library.py` keep an
+existing (hand-edited) CSV in place unless run with `--force`. The full model
+run is heavy; `run_static_scenarios.py` accepts `--scenarios <id ...>` and
+`--limit-scenarios N` to run a subset.
+
+### Outputs
+
+```text
+data/processed/mappings/province_code_crosswalk.csv
+data/processed/climate/province_pir_clean.csv
+data/processed/climate/province_hazard_exposure.csv
+data/processed/shocks/sector_hazard_vulnerability.csv
+data/processed/shocks/scenario_library.csv
+data/processed/shocks/shock_matrix.csv
+data/processed/simulations/<scenario_id>/...
+data/processed/dashboard/...
+```
+
+> Note: the static simulation totals are produced by the committed strict-min
+> reference propagation model, which has a known, deferred over-propagation /
+> non-convergence issue on the full economy (see
+> [docs/methodology/model_layer.md](docs/methodology/model_layer.md) §5). The
+> shock-calibration layer is independent of and unaffected by that issue.

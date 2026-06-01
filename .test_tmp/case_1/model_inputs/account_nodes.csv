@@ -1,0 +1,12 @@
+sam_node_id,region_code,sector_code,macrosector_code,full_label,account_class,is_productive_account,is_final_demand_account,is_value_added_account,is_external_input_account,is_institutional_account
+0,IT001,A01,A,IT001__A01__A,productive,True,False,False,False,False
+1,IT001,C10,I,IT001__C10__I,productive,True,False,False,False,False
+2,IT002,A01,A,IT002__A01__A,productive,True,False,False,False,False
+3,IT002,C10,I,IT002__C10__I,productive,True,False,False,False,False
+4,EU-ITA,LAB,L,EU-ITA__LAB__L,value_added,False,False,True,False,True
+5,EU-ITA,CAP,K,EU-ITA__CAP__K,value_added,False,False,True,False,True
+6,EU-ITA,TAX,T,EU-ITA__TAX__T,value_added,False,False,True,False,True
+7,EU-ITA,HH,HH,EU-ITA__HH__HH,final_demand,False,True,False,False,True
+8,EU-ITA,CF,CF,EU-ITA__CF__CF,final_demand,False,True,False,False,True
+9,EU-ITA,GOV,G,EU-ITA__GOV__G,final_demand,False,True,False,False,True
+10,EU-ITA,ROW,R,EU-ITA__ROW__R,final_demand,False,True,False,True,True

@@ -144,14 +144,20 @@ def main() -> None:
     )
 
     # --- Node universe -------------------------------------------------------
+    # The macrosector is the third "__"-separated part of the account label
+    # (row_label for origins, col_label for destinations). It is needed by the
+    # modelling layer to classify accounts into productive / final-demand /
+    # value-added blocks, so it is carried into the node table here.
     print("\nBuilding node universe...")
     origins = flows.select(
         F.col("origin_region").alias("region_code"),
         F.col("origin_sector").alias("sector_code"),
+        F.element_at(F.split(F.col("row_label"), "__"), 3).alias("macrosector_code"),
     )
     destinations = flows.select(
         F.col("destination_region").alias("region_code"),
         F.col("destination_sector").alias("sector_code"),
+        F.element_at(F.split(F.col("col_label"), "__"), 3).alias("macrosector_code"),
     )
     pairs_pdf = origins.union(destinations).distinct().toPandas()
     nodes = build_nodes(pairs_pdf)
