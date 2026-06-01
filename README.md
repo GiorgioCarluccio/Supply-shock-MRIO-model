@@ -6,7 +6,10 @@ This repository develops data-preparation and modeling tools for applying negati
 
 The repository is currently an early-stage data-preparation workspace. It prepares E-OBS climate data and ISTAT province geometries, computes provincial heatwave exposure indicators, and produces diagnostic outputs for later integration into the MRIO shock model.
 
-It is not yet a web application and does not use databases, APIs, Docker, or frontend code.
+The repository also ships a **static demonstrative dashboard** (`frontend/`) that
+visualises the precomputed scenario outputs. See
+[Static dashboard app](#static-dashboard-app) below. The dashboard does not run
+the model; it reads exported JSON/GeoJSON assets client-side.
 
 ## Heatwave Exposure Indicator
 
@@ -388,3 +391,144 @@ data/processed/dashboard/...
 > non-convergence issue on the full economy (see
 > [docs/methodology/model_layer.md](docs/methodology/model_layer.md) §5). The
 > shock-calibration layer is independent of and unaffected by that issue.
+
+## Static dashboard app
+
+The `frontend/` directory contains a **static, demonstrative** dashboard that
+presents the precomputed climate physical-risk scenario results for Italian
+provinces. It is built for communication and exploration — **not** a live impact
+calculator. Changing a selector loads different precomputed files; it never runs
+the IO propagation model in the browser.
+
+The dashboard estimates **business-interruption impacts** on production flows,
+**not** physical asset damage.
+
+### Purpose
+
+Explore, per hazard / severity scenario:
+
+- direct hazard exposure by province;
+- calibrated supply and demand shocks;
+- direct vs indirect production losses;
+- sectoral impacts;
+- inter-provincial and inter-sectoral flow reconfiguration;
+- the modelling methodology and data assumptions.
+
+Sections: **Overview · Regional · Sectors · Network · Methodology · Data &
+assumptions**.
+
+### Frontend stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS + shadcn/ui-style components (Radix primitives)
+- Apache ECharts (bar, stacked, Sankey, heatmap, and the province choropleth
+  map via `registerMap` — chosen over a WebGL basemap for reliability in this
+  static, no-tile-server setup; ISTAT 2024 province boundaries)
+- Atkinson Hyperlegible typography, OpenEconomics brand palette
+
+### Scenario assumptions
+
+Per the dashboard specification, scenario outputs are intended to use
+`max_iter = 1` and `gamma = 0.5`. The export validates this against the scenario
+build report; if the stored outputs differ (the current committed simulations
+were generated with more iterations), the dashboard surfaces a visible caveat in
+the Methodology and Data & assumptions sections rather than implying a live
+calculator.
+
+### 1. Export the data (Python)
+
+The dashboard reads static assets from `frontend/public/data/`. Generate them
+from the precomputed `data/processed/` outputs:
+
+```powershell
+# Province geometry -> WGS84 GeoJSON
+.\.venv\Scripts\python.exe scripts\export_province_geojson_for_frontend.py
+
+# Dashboard CSV/JSON -> per-scenario frontend JSON
+.\.venv\Scripts\python.exe scripts\export_dashboard_data_for_frontend.py
+
+# (optional) validate the export and its joins
+.\.venv\Scripts\python.exe scripts\test_frontend_data_export.py
+```
+
+These assets are git-ignored build artifacts (`frontend/public/data/` can be
+large); regenerate them with the scripts above rather than committing them.
+
+### 2. Install and run the frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Then open <http://localhost:3000>.
+
+To produce an optimised build:
+
+```powershell
+npm run build
+npm run start
+```
+
+### Notes
+
+- The app is **static and demonstrative**; it reads precomputed files only and
+  does not run simulations live.
+- No backend, database, or Databricks runtime is required for the dashboard.
+- Scenario outputs are expected to use `max_iter = 1` and `gamma = 0.5`; the
+  actual stored runtime parameters are validated and any mismatch is shown as a
+  caveat in-app.
+
+### Deploying to GitHub Pages
+
+The dashboard exports to a fully static site, so it can be hosted on GitHub
+Pages. Because the model outputs in `data/processed/` are **not** committed to
+the repo, the data is baked into the build **locally** (where the files exist)
+and the resulting static `out/` directory is published to a `gh-pages` branch.
+
+The build is configured for a project page at
+`https://<user>.github.io/Supply-shock-MRIO-model/` via a base path
+(`NEXT_PUBLIC_BASE_PATH=/Supply-shock-MRIO-model`, already wired into the
+`build:pages` script).
+
+One-time setup: install deploy tooling is already in `devDependencies`
+(`gh-pages`, `cross-env`); just ensure dependencies are installed.
+
+Deploy:
+
+```powershell
+# from the repo root — (re)generate the static data first if needed
+.\.venv\Scripts\python.exe scripts\export_province_geojson_for_frontend.py
+.\.venv\Scripts\python.exe scripts\export_dashboard_data_for_frontend.py
+
+cd frontend
+npm install
+npm run deploy   # builds with the base path and pushes out/ to the gh-pages branch
+```
+
+Then, once, enable Pages in the GitHub repo:
+
+```text
+Settings → Pages → Build and deployment
+  Source: Deploy from a branch
+  Branch: gh-pages   /(root)
+```
+
+The site will be served at:
+
+```text
+https://giorgiocarluccio.github.io/Supply-shock-MRIO-model/
+```
+
+Notes:
+
+- If you fork/rename the repo, update `NEXT_PUBLIC_BASE_PATH` in the
+  `build:pages` script (and the URL above) to match the new repo name. For a
+  user/organisation page (`<user>.github.io`) served at the domain root, set the
+  base path to empty.
+- `npm run build:pages` alone produces the static site in `frontend/out/` if you
+  prefer to deploy via another host (Netlify, Vercel, S3, an internal server).
+  For root-domain hosts, build without the base path: `npm run build`.
+- The generated `out/` and `public/data/` directories are git-ignored; the
+  `gh-pages` branch holds the published artifacts.
