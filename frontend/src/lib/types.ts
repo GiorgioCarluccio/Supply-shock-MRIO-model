@@ -159,6 +159,8 @@ export interface SectorMeta {
   sector_group_id: number;
   sector_code: string;
   macrosector_code: string;
+  /** Full NACE sector name from the decoder; absent if the decoder was missing. */
+  sector_name?: string;
 }
 
 export interface SectorVulnerability {

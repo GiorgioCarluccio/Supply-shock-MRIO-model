@@ -54,12 +54,18 @@ export function useSectorLabels(): SectorLabels {
     const byCode = new Map(
       (sectors ?? []).map((s) => [s.sector_code, s.macrosector_code]),
     );
+    const nameByCode = new Map(
+      (sectors ?? []).map((s) => [s.sector_code, s.sector_name]),
+    );
     const macroName = (code: string) => {
       const macro = byCode.get(code);
       return macro ? MACROSECTOR_LABELS[macro] ?? macro : "";
     };
     return {
+      // Prefer the full NACE name; fall back to the macrosector label.
       full: (code) => {
+        const name = nameByCode.get(code);
+        if (name) return `${code} · ${name}`;
         const m = macroName(code);
         return m ? `${code} · ${m}` : code;
       },

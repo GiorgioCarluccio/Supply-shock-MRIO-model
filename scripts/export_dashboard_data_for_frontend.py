@@ -61,6 +61,11 @@ MAPPINGS = REPO_ROOT / "data" / "processed" / "mappings"
 MODEL_INPUTS = REPO_ROOT / "data" / "processed" / "model_inputs"
 OUT = REPO_ROOT / "frontend" / "public" / "data"
 
+# Optional NACE sector_code -> full sector name decoder (2 columns, no header:
+# code, name). Used to enrich sector_meta.json with human-readable labels for
+# the dashboard. If absent, sector_name is simply omitted (graceful fallback).
+SECTOR_DECODER_PATH = REPO_ROOT / "eurostat_sector_decoder.xlsx"
+
 # Runtime parameters the dashboard scenarios are *expected* to use.
 EXPECTED_MAX_ITER = 1
 EXPECTED_GAMMA = 0.5
@@ -165,6 +170,24 @@ def main() -> int:
 
     # ---- sector metadata -------------------------------------------------
     sector_map = pd.read_csv(_require(MODEL_INPUTS / "sector_mapping.csv"))
+    # Enrich with full NACE sector names from the decoder if available. The
+    # decoder has no header row: column 0 = sector_code, column 1 = full name.
+    if SECTOR_DECODER_PATH.exists():
+        decoder = pd.read_excel(
+            SECTOR_DECODER_PATH, header=None, names=["sector_code", "sector_name"]
+        )
+        decoder["sector_code"] = decoder["sector_code"].astype(str).str.strip()
+        sector_map["sector_code"] = sector_map["sector_code"].astype(str).str.strip()
+        sector_map = sector_map.merge(decoder, on="sector_code", how="left")
+        n_missing = int(sector_map["sector_name"].isna().sum())
+        if n_missing:
+            missing = sector_map.loc[sector_map["sector_name"].isna(), "sector_code"].tolist()
+            print(f"  WARNING: {n_missing} sector(s) without a decoder name: {missing}")
+        else:
+            print(f"  sector_meta: enriched {len(sector_map)} sectors with full names")
+    else:
+        print(f"  NOTE: sector decoder not found at {SECTOR_DECODER_PATH}; "
+              "sector_name omitted from sector_meta.json")
     _write_json(OUT / "sector_meta.json", _records(sector_map))
 
     vuln = pd.read_csv(_require(SHOCKS / "sector_hazard_vulnerability.csv"))
